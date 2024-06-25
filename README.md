@@ -1,4 +1,4 @@
-To get things working before I'm finished: 
+# To get things working before I'm finished: 
 
   change HOST to your local IP 
   change PORT to a port that you have open
