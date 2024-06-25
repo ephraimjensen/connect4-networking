@@ -118,6 +118,11 @@ def show_game_board(game_board):
         print("\t" + f"{row}")
     print("\n")
 
+def check_4_in_row(game_board):
+    pass
+    for row in range(len(game_board)):
+        pass
+
 def main():
 
     game_board = [

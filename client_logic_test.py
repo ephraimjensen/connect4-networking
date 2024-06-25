@@ -42,10 +42,14 @@ def main():
     # str_list = f"{a_list}"
     str_gb = f"{game_board}"
 
+    for row in (game_board):
+        for column in row:
+            print(column)
 
-    list_game_board = str_to_list(str_gb)
-    list_game_board[5][3] = 9
-    show_game_board(list_game_board)
+
+    # list_game_board = str_to_list(str_gb)
+    # list_game_board[5][3] = 9
+    # show_game_board(list_game_board)
 
 
 main()
