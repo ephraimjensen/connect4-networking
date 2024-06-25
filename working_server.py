@@ -119,9 +119,79 @@ def show_game_board(game_board):
     print("\n")
 
 def check_4_in_row(game_board):
-    pass
     for row in range(len(game_board)):
-        pass
+        for i in range(0,3):
+            if row + 3 <= 5:
+                if game_board[row][0+i] == game_board[row + 3][3+i]:
+                    if game_board[row][0+i] == game_board[row + 1][1+i]:
+                        if game_board[row][0+i] == game_board[row + 2][2+i]:
+                            return True
+
+                if game_board[row][1+i] == game_board[row + 3][4+i]:
+                    if game_board[row][1+i] == game_board[row + 1][2+i]:
+                        if game_board[row][1+i] == game_board[row + 2][3+i]:
+                            return True
+                        
+                if game_board[row][2+i] == game_board[row + 3][5+i]:
+                    if game_board[row][2+i] == game_board[row + 2][4+i]:
+                        if game_board[row][2+i] == game_board[row + 1][3+i]:
+                            return True
+                if game_board[row][3+i] == game_board[row + 3][6+i]:
+                    if game_board[row][3+i] == game_board[row + 2][5+i]:
+                        if game_board[row][3+i] == game_board[row + 1][4+i]:
+                            return True
+                        
+            row_inverted = 5-row
+            if row_inverted -3 >= 0:
+                # if game_board[row_inverted][0+i] == game_board[row_inverted - 3][3+i]:
+                #     # if game_board[row]
+                # if game_board[row_inverted][1+i] == game_board[row_inverted - 3][4+i]:
+                # if game_board[row_inverted][2+i] == game_board[row_inverted - 3][5+i]:
+                # if game_board[row_inverted][3+i] == game_board[row_inverted - 3][6+i]:
+                #     return True
+                
+                if game_board[row_inverted][0+i] == game_board[row_inverted - 3][3+i]:
+                    if game_board[row_inverted][0+i] == game_board[row_inverted - 2][2+i]:
+                        if game_board[row_inverted][0+i] == game_board[row_inverted - 1][1+i]:
+                            return True
+
+                if game_board[row_inverted][1+i] == game_board[row_inverted - 3][4+i]:
+                    if game_board[row_inverted][1+i] == game_board[row_inverted - 2][3+i]:
+                        if game_board[row_inverted][1+i] == game_board[row_inverted - 1][2+i]:
+                            return True
+                        
+                if game_board[row_inverted][2+i] == game_board[row_inverted - 3][5+i]:
+                    if game_board[row_inverted][2+i] == game_board[row_inverted - 2][4+i]:
+                        if game_board[row_inverted][2+i] == game_board[row_inverted - 1][3+i]:
+                            return True
+                        
+                if game_board[row_inverted][3+i] == game_board[row_inverted - 3][6+i]:
+                    if game_board[row_inverted][3+i] == game_board[row_inverted - 2][5+i]:
+                        if game_board[row_inverted][3+i] == game_board[row_inverted - 1][4+i]:
+                            return True
+
+        if game_board[row][0+i] == game_board[row][3+i]:
+            if game_board[row][0+i] == game_board[row] [2+i]:
+                if game_board[row][0+i] == game_board[row][1+i]:
+                    return True
+
+        if game_board[row][1+i] == game_board[row][4+i]:
+            if game_board[row][1+i] == game_board[row][3+i]:
+                if game_board[row][1+i] == game_board[row][2+i]:
+                    return True
+                
+        if game_board[row_inverted][2+i] == game_board[row][5+i]:
+            if game_board[row_inverted][2+i] == game_board[row][4+i]:
+                if game_board[row_inverted][2+i] == game_board[row][3+i]:
+                    return True
+                
+        if game_board[row][3+i] == game_board[row][6+i]:
+            if game_board[row][3+i] == game_board[row][5+i]:
+                if game_board[row][3+i] == game_board[row][4+i]:
+                    return True
+
+
+
 
 def main():
 
