@@ -23,7 +23,6 @@ I built this program in Python and used the following modules: socket, threading
 
 # Useful Websites
 
-{Make a list of websites that you found helpful in this project}
 * [Python Sockets Documentation](https://docs.python.org/3/howto/sockets.html)
 * [Python Threading Documentation](https://docs.python.org/3/library/threading.html)
 * [ASCII Art Generator](https://patorjk.com/software/taag/#p=display&f=ANSI%20Regular&t=%0A)
