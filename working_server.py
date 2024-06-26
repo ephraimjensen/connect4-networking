@@ -14,7 +14,9 @@ import threading
 HOST = ""  
 PORT = 80
 
-BLANK_CHARACTER = 0
+BLANK_CHARACTER = " "
+
+
 
 def handle_client(
         client_connection:socket.socket
@@ -23,14 +25,14 @@ def handle_client(
         , player_index
         , turn_counter
         # , is_player1_turn
-        , game_over
+        # , game_over
         ):
     
     
     print(f"\nClient Address: {client_address}")
     player_has_won = False
-    global is_player1_turn
-    
+    global is_player1_turn, game_over
+  
 
     # if not first_time
     
@@ -52,20 +54,23 @@ def handle_client(
                     operation_code  = decoded_data[0]
                     decoded_data = decoded_data[1:]
 
-                    player_number = int(f"{client_address}"[18:23])
-
                     #check if op code is PING SERVER
                     if operation_code == "P":
 
                         if is_player1_turn:
-
-                            message = f"{player_index}Player 1 Turn".encode("utf-8")
+                            if player_has_won:
+                                message = f"YOU LOSE".encode("utf-8")
+                            else:
+                                message = f"{player_index}Player 1 Turn".encode("utf-8")
                             client_connection.sendall(message)
                             print(is_player1_turn)
                             continue
 
                         else:
-                            message = f"{player_index}Player 2 Turn".encode("utf-8")
+                            if player_has_won:
+                                message = f"YOU LOSE".encode("utf-8")
+                            else:
+                                message = f"{player_index}Player 2 Turn".encode("utf-8")
                             client_connection.sendall(message)
                             print(is_player1_turn)
                             continue
@@ -82,9 +87,12 @@ def handle_client(
 
                     #check if op code is SENDING MOVE
                     elif operation_code == "M":
-                        # row = int(decoded_data[0])
-                        column = int(decoded_data[0])
-                        value = player_number
+                        column = int(decoded_data[0]) - 1
+                        # value = player_index
+                        if player_index == 2:
+                            value = "X"
+                        else:
+                            value = "O"
                         
                         # fill in the correct row based on game state and given column
                         for i in range (6):
@@ -93,21 +101,40 @@ def handle_client(
                                 game_board[column_number_from_bottom_up][column] = value
                                 break
 
-                        # game_board[row][column] = value
                         show_game_board(game_board)
                         player_has_won = check_4_in_row(game_board)
-                        if player_has_won:
-                            print(player_has_won)
-                        message = f"{game_board}{player_has_won}".encode("utf-8")
-                        client_connection.sendall(message)
-                        is_player1_turn = not is_player1_turn
-                        print(f"I am {player_number}. I just ended my turn")
-    
-                        
 
+                        if player_has_won:
+                            game_over = True
+                            print(player_has_won)
+
+                            win_message = f"{game_board}{player_has_won}".encode("utf-8")
+                            client_connection.sendall(win_message)
+                            # is_player1_turn = not is_player1_turn
+                        else:
+                            message = f"{game_board}".encode("utf-8")
+                            client_connection.sendall(message)
+                            is_player1_turn = not is_player1_turn
+                           
     finally:
+        global conn_closed
+        data = client_connection.recv(1024)
+        #check if data is truthy (client has not closed connection)
+        if data:
+            #decode to string, remove and store op code
+            decoded_data = data.decode()
+            print(f"From: {client_address}\n\tincoming transmission: {decoded_data}\n")
+            operation_code  = decoded_data[0]
+            decoded_data = decoded_data[1:]
+
+            if operation_code == "R":
+                message = f"{game_board}".encode("utf-8")
+                client_connection.sendall(message)
+
         client_connection.close()
         print(f"connection with {client_address} closed because win")
+        conn_closed += 1
+        print(f"{conn_closed} connections have been closed")
             
     
 def show_game_board(game_board):
@@ -121,25 +148,25 @@ def check_4_in_row(game_board):
         
         #check for diagonal top-L to bottom-R
         if row + 3 <= 5:
-            if game_board[row][0] != 0:
+            if game_board[row][0] != BLANK_CHARACTER:
                 if game_board[row][0] == game_board[row + 3][3]:
                     if game_board[row][0] == game_board[row + 1][1]:
                         if game_board[row][0] == game_board[row + 2][2]:
                             return True
                         
-            if game_board[row][1] != 0:
+            if game_board[row][1] != BLANK_CHARACTER:
                 if game_board[row][1] == game_board[row + 3][4]:
                     if game_board[row][1] == game_board[row + 1][2]:
                         if game_board[row][1] == game_board[row + 2][3]:
                             return True
                         
-            if game_board[row][2] != 0:   
+            if game_board[row][2] != BLANK_CHARACTER:   
                 if game_board[row][2] == game_board[row + 3][5]:
                     if game_board[row][2] == game_board[row + 2][4]:
                         if game_board[row][2] == game_board[row + 1][3]:
                             return True
                             
-            if game_board[row][3] != 0:      
+            if game_board[row][3] != BLANK_CHARACTER:      
                 if game_board[row][3] == game_board[row + 3][6]:
                     if game_board[row][3] == game_board[row + 2][5]:
                         if game_board[row][3] == game_board[row + 1][4]:
@@ -148,50 +175,50 @@ def check_4_in_row(game_board):
             #check for diagonal bottom-L to top-R   
             row_inverted = 5-row
             if row_inverted -3 >= 0:
-                if game_board[row_inverted-i][0] != 0:
+                if game_board[row_inverted-i][0] != BLANK_CHARACTER:
                     if game_board[row_inverted-i][0] == game_board[row_inverted - 3-i][3]:
                         if game_board[row_inverted-i][0] == game_board[row_inverted - 2-i][2]:
                             if game_board[row_inverted-i][0] == game_board[row_inverted - 1-i][1]:
                                 return True
 
-                if game_board[row_inverted-i][1] != 0:
+                if game_board[row_inverted-i][1] != BLANK_CHARACTER:
                     if game_board[row_inverted-i][1] == game_board[row_inverted - 3-i][4]:
                         if game_board[row_inverted-i][1] == game_board[row_inverted - 2-i][3]:
                             if game_board[row_inverted-i][1] == game_board[row_inverted - 1-i][2]:
                                 return True
                         
-                if game_board[row_inverted-i][2] != 0:
+                if game_board[row_inverted-i][2] != BLANK_CHARACTER:
                     if game_board[row_inverted-i][2] == game_board[row_inverted - 3-i][5]:
                         if game_board[row_inverted-i][2] == game_board[row_inverted - 2-i][4]:
                             if game_board[row_inverted-i][2] == game_board[row_inverted - 1-i][3]:
                                 return True
                         
-                if game_board[row_inverted-i][3] != 0:
+                if game_board[row_inverted-i][3] != BLANK_CHARACTER:
                     if game_board[row_inverted-i][3] == game_board[row_inverted - 3-i][6]:
                         if game_board[row_inverted-i][3] == game_board[row_inverted - 2-i][5]:
                             if game_board[row_inverted-i][3] == game_board[row_inverted - 1-i][4]:
                                 return True
 
         # check for horizontal 4inrow
-        if game_board[row][0] != 0:
+        if game_board[row][0] != BLANK_CHARACTER:
                 if game_board[row][0] == game_board[row][3]:
                     if game_board[row][0] == game_board[row] [2]:
                         if game_board[row][0] == game_board[row][1]:
                             return True
 
-        if game_board[row][1] != 0:
+        if game_board[row][1] != BLANK_CHARACTER:
             if game_board[row][1] == game_board[row][4]:
                 if game_board[row][1] == game_board[row][3]:
                     if game_board[row][1] == game_board[row][2]:
                         return True
                 
-        if game_board[row][2] != 0:
+        if game_board[row][2] != BLANK_CHARACTER:
             if game_board[row][2] == game_board[row][5]:
                 if game_board[row][2] == game_board[row][4]:
                     if game_board[row][2] == game_board[row][3]:
                         return True
                 
-        if game_board[row][3] != 0:
+        if game_board[row][3] != BLANK_CHARACTER:
             if game_board[row][3] == game_board[row][6]:
                 if game_board[row][3] == game_board[row][5]:
                     if game_board[row][3] == game_board[row][4]:
@@ -200,7 +227,7 @@ def check_4_in_row(game_board):
         if row <= 2:
             for i in range(0,7):
                 
-                if game_board[row][i] != 0:
+                if game_board[row][i] != BLANK_CHARACTER:
                     if game_board[row][i] == game_board[row+3][i]:
                         if game_board[row][i] == game_board[row+2] [i]:
                             if game_board[row][i] == game_board[row+1][i]:
@@ -211,30 +238,21 @@ def check_4_in_row(game_board):
     
 
 
-global is_player1_turn, game_over
-is_player1_turn = True
-game_over = False
+
 
 def main():
-
-    # stop_event = threading.Event()
-
-    # game_board = [
-    #       ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
-    #     , ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
-    #     , ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
-    #     , ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
-    #     , ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
-    #     , ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
-    # ]
+    global is_player1_turn, game_over, conn_closed
+    is_player1_turn = True
+    game_over = False
+    conn_closed = 0
 
     game_board = [
-        [00000, 00000, 00000, 00000, 00000, 00000, 00000]
-        , [00000, 00000, 00000, 00000, 00000, 00000, 00000]
-        , [00000, 00000, 00000, 00000, 00000, 00000, 00000]
-        , [00000, 00000, 00000, 00000, 00000, 00000, 00000]
-        , [00000, 00000, 00000, 00000, 00000, 00000, 00000]
-        , [00000, 00000, 00000, 00000, 00000, 00000, 00000]
+        [BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER]
+        , [BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER]
+        , [BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER]
+        , [BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER]
+        , [BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER]
+        , [BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER, BLANK_CHARACTER]
     ]
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -247,32 +265,42 @@ def main():
         try:
             player_number = 1
             turn_counter = 0
+            conn_opened = 0
             
 
 
             while True:
                 
-                client_connection, client_address = s.accept()
-                # is_odd_player = not is_odd_player
+                if conn_closed >= 2:
+                    break
+                if conn_opened <= 1:
+                    client_connection, client_address = s.accept()
+                    # is_odd_player = not is_odd_player
 
-                client_thread = threading.Thread(
-                    target=handle_client
-                    , args = (
-                      client_connection
-                    , client_address
-                    , game_board
-                    , player_number
-                    , turn_counter
-                    # , is_player1_turn
-                    , game_over
-                    )
+                    client_thread = threading.Thread(
+                        target=handle_client
+                        , args = (
+                        client_connection
+                        , client_address
+                        , game_board
+                        , player_number
+                        , turn_counter
+                        # , is_player1_turn
+                        # , game_over
+                        )
+                        
+                        )
                     
-                    )
+                    
+                    client_thread.start()
                 
-                client_thread.start()
-                
-                player_number += 1
-                # is_player1_turn = not is_player1_turn
+                    conn_opened += 1
+                    player_number += 1
+                    #allow for disconnects
+                    if player_number > 2:
+                        player_number = 1
+
+
 
         finally:
             s.close()
@@ -281,3 +309,40 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+#above finally
+                            # data = client_connection.recv(1024)
+                            # decoded_data = data.decode()
+                            # print(f"From: {client_address}\n\tincoming transmission: {decoded_data}\n")
+                            # operation_code  = decoded_data[0]
+                            # decoded_data = decoded_data[1:]
+                            # #check if op code is REQUEST BOARD.
+                            # if operation_code == "P":
+
+                            #     if is_player1_turn:
+
+                            #         message = f"{player_index}Player 1 Turn".encode("utf-8")
+                            #         client_connection.sendall(message)
+                            #         print(is_player1_turn)
+                            #         continue
+
+                            #     else:
+                            #         message = f"{player_index}Player 2 Turn".encode("utf-8")
+                            #         client_connection.sendall(message)
+                            #         print(is_player1_turn)
+                                    
+                            # data = client_connection.recv(1024)
+                            # decoded_data = data.decode()
+                            # print(f"From: {client_address}\n\tincoming transmission: {decoded_data}\n")
+                            # operation_code  = decoded_data[0]
+                            # decoded_data = decoded_data[1:]
+                            #check if op code is REQUEST BOARD.
+
+                            # if operation_code == "R":
+                            #     message = f"{game_board}".encode("utf-8")
+                            #     client_connection.sendall(message)
+                            #     win_message = f"{game_board}{player_has_won}".encode("utf-8")
+                            #     client_connection.sendall(win_message)
+                            #     is_player1_turn = not is_player1_turn
