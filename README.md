@@ -5,8 +5,6 @@ This program is a connect 4 game that allows two players to play a game of conne
 
 I wrote this software to learn how networking and threading work so that I can use them in future projects.
 
-{Provide a link to your YouTube demonstration.  It should be a 4-5 minute demo of the software running (you will need to show two pieces of software running and communicating with each other) and a walkthrough of the code.}
-
 [Software Demo Video](https://www.loom.com/share/07d529fec0c24aefbc68d63c8a58b8e4)
 
 # Network Communication
