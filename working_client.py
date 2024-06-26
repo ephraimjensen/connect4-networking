@@ -11,6 +11,7 @@ This is a copy of client.py that has been changed slightly (changes reverted) to
 import socket
 import os
 import ast
+import time
 
 HOST = '10.50.200.195'
 # HOST = "localhost"
@@ -19,6 +20,7 @@ PORT = 80
 PLAYER_NUMBER = 1
 
 def game_board_to_list(string:str):
+    print(string)
     return ast.literal_eval(string)
 
 def send_message(my_socket:socket.socket, user_input:str, listen_for_response = True):
@@ -50,93 +52,128 @@ def update_game_board(game_board:str):
 def check_turn(s:socket.socket):
     operation_choice = "P"
     message = operation_choice + "Pinging the server"
-    send_message(s, message)
+    send_message(s, message, listen_for_response=False)
     decoded_data = s.recv(1024).decode("utf-8")
-    if decoded_data == "GO AHEAD":
+
+    my_player_number = decoded_data[0]
+
+    decoded_data = decoded_data[1:]
+
+    if my_player_number == decoded_data[7]:
         print("it IS your turn")
         return True
-    elif decoded_data == "NOT YOUR TURN":
-        print("it is NOT your turn")
-        return False
+    elif my_player_number == decoded_data[7]:
+        print("it IS your turn")
+        return True
     else:
         #an error?
-        print("While sending a ping, we got an unrecognized response")
+        # print("It is NOT your turn")
+        # print(decoded_data)
+        return False
 
 def main():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+
+
         
         #connect
         s.connect((HOST, PORT))
         game_board = []
 
-        # go_ahead = s.recv(1024)
+        game_over = False
 
-        operation_choice = "R"
-        #get the game board/state
-        message = operation_choice + ""
-        response = send_message(s, message)
-        game_board = update_game_board(response)
-        show_game_board(game_board)
+        
 
-        # print(f"you are player number: {}")
+        while not game_over:
 
+            is_my_turn = check_turn(s)
 
-        while True:
+            if is_my_turn:
 
-            #blocks input until server sends message to self
-            # go_ahead = s.recv(1024)
-
-            #get operation
-            operation_choice = input("What do you want to do?\n\tI - initial connection (deprecated)\n\tR - request game board (deprecated)\n\tM - send move\n\tS - show game board (deprecated)\n\tT - terminate session\nYour Choice: ")
-            
-            # is_my_turn = check_turn(s)
-            # if is_my_turn: dn_arror\t
-            print("it is your turn")
-                
-            # Clearing the Screen
-            # os.system('clear')
-            print(f"You have chosen: {operation_choice}\n")
-
-            if operation_choice == "I":
-
-                # message = input("Type a message here: ")
-                message = operation_choice + "connecting for the first time"
-                send_message(s, message)
-
-            # elif operation_choice == "P":
-            #     message = operation_choice + "Pinging the server"
-            #     send_message(s, message)
-
-            elif operation_choice == "S":
-                show_game_board(game_board)
-
-            elif operation_choice == "R":
+                operation_choice = "R"
                 #get the game board/state
                 message = operation_choice + ""
                 response = send_message(s, message)
                 game_board = update_game_board(response)
-                # print(f"Received:'{response}'\n")
                 show_game_board(game_board)
 
-            elif operation_choice == "M":
-                show_game_board(game_board)
-                # row = input("Enter the row to change: ")
-                column = input("Enter the column to change: ")
-                # value = input("Enter the value to insert: ")
-                message = operation_choice + column
-                response = send_message(s, message)
+                #blocks input until server sends message to self
+                # go_ahead = s.recv(1024)
 
-                #update own game board based on server copy
-                game_board = update_game_board(response)
-                show_game_board(game_board)
+                #get operation
+                operation_choice = input("What do you want to do?\n\tI - initial connection (deprecated)\n\tR - request game board (deprecated)\n\tM - send move\n\tS - show game board (deprecated)\n\tT - terminate session\nYour Choice: ")
+                
+                # is_my_turn = check_turn(s)
+                # if is_my_turn: dn_arror\t
+                # print("it is your turn")
+                    
+                # Clearing the Screen
+                # os.system('clear')
+                print(f"You have chosen: {operation_choice}\n")
+
+                if operation_choice == "I":
+
+                    # message = input("Type a message here: ")
+                    message = operation_choice + "connecting for the first time"
+                    send_message(s, message)
+
+                # elif operation_choice == "P":
+                #     message = operation_choice + "Pinging the server"
+                #     send_message(s, message)
+
+                elif operation_choice == "S":
+                    show_game_board(game_board)
+
+                # elif operation_choice == "R":
+                #     #get the game board/state
+                #     message = operation_choice + ""
+                #     response = send_message(s, message)
+                #     game_board = update_game_board(response)
+                #     # print(f"Received:'{response}'\n")
+                #     show_game_board(game_board)
+
+                elif operation_choice == "M":
+                    show_game_board(game_board)
+                    # row = input("Enter the row to change: ")
+                    column = input("Enter the column to change: ")
+                    # value = input("Enter the value to insert: ")
+                    message = operation_choice + column
+                    response = send_message(s, message)
+
+                    response_length = len(response)
+                    if response[response_length - 5:] == "False":
+                        response = response[:response_length - 5]
+                        game_over = False
+                    if response[response_length - 4:] == "True":
+                        response = response[:response_length - 4]
+                        game_over = True
 
 
-            elif operation_choice == "T":
-                s.close()
-                break
-            # else:
-            #     print("It is not your turn. Please wait for the other player")
+                    #update own game board based on server copy
+                    print(response)
+                    game_board = update_game_board(response)
+                    show_game_board(game_board)
 
+                    # game_over = s.recv(1024).decode("utf-8")
+                    if game_over == "True":
+                        print("I won")
+
+
+                elif operation_choice == "T":
+                    s.close()
+                    break
+                # else:
+                #     print("It is not your turn. Please wait for the other player")
+            else:
+                print("it is not your turn")
+                time.sleep(3)
+                os.system('clear')
+
+                
+
+        print(game_board)
+        print("\nYou won!")
+        s.close()
             
 
 if __name__ == "__main__":
